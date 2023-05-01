@@ -10,11 +10,5 @@ pip install telebot
 pip install python-dotenv
 pip install mysql-connector-python
 
-# Run any necessary build steps or migrations
-python manage.py migrate
-
-# Restart the application server
-sudo systemctl restart myapp.service
-
 # Run the bot
 python bot.py
