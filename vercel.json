@@ -18,12 +18,5 @@
   "env": {
     "BOTTOKEN": "6010256354:AAHChAnylibLfKnJuxvM6wy--nRxEGIq4bw",
     "SUCCESS_MESSAGE": "👍 Welcome To Mushee World"
-  },
-  "dependencies": {
-    "python-dotenv": "^1.0.0",
-    "mysql-connector-python": "^8.0.33",
-    "telebot": "^0.0.5",
-    "mysql": "^0.0.3",
-    "pyTelegramBotAPI": "^4.11.0"
   }
 }
