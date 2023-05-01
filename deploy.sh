@@ -15,3 +15,6 @@ python manage.py migrate
 
 # Restart the application server
 sudo systemctl restart myapp.service
+
+# Run the bot
+python bot.py
