@@ -99,7 +99,7 @@ def send_welcome(message):
             if referred_link != {}:
                 response = referred_link[user_id]
                 bot.send_message(message.chat.id, response, reply_markup=home_keyboard)
-            else:                    
+            elif referred_link == {}:                    
                 @bot.message_handler(func=lambda message: message.chat.id == user_id and 'start=' in message.text)
                 def handle_referrals(message):
                     # Extract the referrer's ID from the message
@@ -125,7 +125,7 @@ def send_welcome(message):
             
     except Exception as e:
         print(e)
-        bot.reply_to(message, "Invalid Referral Link")      
+        bot.reply_to(message, e)
 
 @bot.message_handler(func=lambda message: message.text == '💢 Main Menu')
 def send_commands(message):
