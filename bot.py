@@ -125,7 +125,8 @@ def send_welcome(message):
             
     except telebot.apihelper.ApiTelegramException as e:
         # Handle the error message appropriately
-        bot.reply_to(message, e)
+        print(e)
+        bot.reply_to(message, "An error has occurred")
 
 @bot.message_handler(func=lambda message: message.text == '💢 Main Menu')
 def send_commands(message):
