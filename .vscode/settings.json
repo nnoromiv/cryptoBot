@@ -8,7 +8,9 @@
         "musheehub",
         "mydatabase",
         "pymongo",
+        "pytest",
         "Trustwallet",
         "tweepy"
-    ]
+    ],
+    "docwriter.progress.trackClasses": true
 }
