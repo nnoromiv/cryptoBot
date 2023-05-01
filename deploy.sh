@@ -7,7 +7,7 @@ pip install python-dotenv
 pip install mysql-connector-python
 
 # Create and activate a virtual environment
-python3 -m venv myenv
+python -m venv myenv
 source myenv/bin/activate
 
 # Environment variables
