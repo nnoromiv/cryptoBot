@@ -123,8 +123,8 @@ def send_welcome(message):
             referral_data[user_id] = {'referrer_id': None, 'referral_count': 0, 'referral_balance': 0,}
             bot.reply_to(message, f"Welcome to our bot! You were referred by NOBODY.", reply_markup=home_keyboard)
             
-    except Exception as e:
-        print(e)
+    except telebot.apihelper.ApiTelegramException as e:
+        # Handle the error message appropriately
         bot.reply_to(message, e)
 
 @bot.message_handler(func=lambda message: message.text == '💢 Main Menu')
