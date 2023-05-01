@@ -82,7 +82,8 @@ try:
     check_for_wallet_table = """SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'mushee_bot' AND table_name = 'wallet';"""
     wallet_table_creation_query = """CREATE TABLE wallet (
             user_id BIGINT PRIMARY KEY,
-            address VARCHAR(42) NOT NULL
+            address VARCHAR(42) NOT NULL,
+            balance INT
         );"""
     select_wallet_query = """SELECT * FROM wallet"""
         
@@ -101,14 +102,11 @@ try:
 
     # close the connection
     connection.close()
-except Exception as e:
+except Error as e:
     print(f"Error encountered is: {e}")
 
 # Initializations
-wallet = {}
-user_airdrop = 60
-
-
+user_airdrop = 50
 SUCCESS_MESSAGE = os.environ['SUCCESS_MESSAGE']
 ERROR_MESSAGE = f"""
 👏 Follow <b><a href="https://twitter.com/musheehub">Mushee Twitter</a></b>
@@ -171,9 +169,11 @@ home_keyboard = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True)
 subscribe_keyboard = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True)
 wallet_keyboard = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True)
 affiliate_keyboard = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True)
+set_wallet_keyboard = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True)
 
 
 main_menu_keyboard.add(register_wallet, airdrop_balance, referral, change_wallet_address)
+set_wallet_keyboard.add(register_wallet)
 home_keyboard.add(mushee_subscribe)
 subscribe_keyboard.add(register_wallet, airdrop_balance, referral, main_menu)
 wallet_keyboard.add(change_wallet_address, main_menu)
@@ -245,7 +245,7 @@ def referral_user_data():
     users = cursor.fetchall()
     referral_datas = [referral_data[0] for referral_data in users]
     return referral_datas
-
+# Get referrer data from a user
 def referrer_data(user_id):
     connection = mysql.connector.connect(
         host='localhost',
@@ -258,7 +258,7 @@ def referrer_data(user_id):
     cursor.execute(select_query, (user_id,))
     referrer_data = cursor.fetchone()[0]
     return referrer_data
-
+# Get referrer count
 def referral_user_count(user_id):
     connection = mysql.connector.connect(
         host='localhost',
@@ -271,7 +271,7 @@ def referral_user_count(user_id):
     cursor.execute(select_query, (user_id,))
     count = cursor.fetchone()[0]
     return count
-
+# Get referrer balance
 def referral_user_balance(user_id):
     connection = mysql.connector.connect(
         host='localhost',
@@ -284,7 +284,7 @@ def referral_user_balance(user_id):
     cursor.execute(select_query, (user_id,))
     balance = cursor.fetchone()[0]
     return balance
-
+# Update the referrer count of a user
 def increment_referral_count(user_id, referral_count):
     connection = mysql.connector.connect(
         host='localhost',
@@ -296,7 +296,7 @@ def increment_referral_count(user_id, referral_count):
     cursor = connection.cursor()
     cursor.execute(update_query, (referral_count, user_id,))
     connection.commit()
-
+# Update the referrer balance of a user
 def increment_referral_balance(user_id, referral_balance):
     connection = mysql.connector.connect(
         host='localhost',
@@ -309,6 +309,96 @@ def increment_referral_balance(user_id, referral_balance):
     cursor.execute(update_query, (referral_balance, user_id,))
     connection.commit()
 
+def insert_wallet_data(user_id, address):
+    connection = mysql.connector.connect(
+        host='localhost',
+        database='mushee_bot',
+        user='root',
+        password=''
+    )
+    insert_query = "INSERT INTO wallet (user_id, address) VALUES (%s, %s)"
+    values = (user_id, address)
+    cursor = connection.cursor()
+    cursor.execute(insert_query, values)
+    connection.commit()
+
+def select_wallet():
+    connection = mysql.connector.connect(
+        host='localhost',
+        database='mushee_bot',
+        user='root',
+        password=''
+    )
+    select_query = "SELECT user_id FROM wallet LIMIT 1"
+    cursor = connection.cursor()
+    cursor.execute(select_query)
+    users = cursor.fetchall()
+    user_ids = [userid[0] for userid in users]    
+    return user_ids
+    
+def select_wallet_by_user_id(user_id):
+    connection = mysql.connector.connect(
+        host='localhost',
+        database='mushee_bot',
+        user='root',
+        password=''
+    )
+    select_query = "SELECT address FROM wallet WHERE user_id = %s LIMIT 1"
+    cursor = connection.cursor()
+    cursor.execute(select_query, (user_id,))
+    wallet_address = cursor.fetchone()[0]
+    return wallet_address
+
+def insert_wallet_address(user_id, address):
+    connection = mysql.connector.connect(
+        host='localhost',
+        database='mushee_bot',
+        user='root',
+        password=''
+    )
+    insert_query = "INSERT INTO wallet (user_id, address, balance) VALUES (%s, %s, %s)"
+    values = (user_id, address, 0)
+    cursor = connection.cursor()
+    cursor.execute(insert_query, values)
+    connection.commit()
+    
+def select_balance_by_user_id(user_id):
+    connection = mysql.connector.connect(
+        host='localhost',
+        database='mushee_bot',
+        user='root',
+        password=''
+    )
+    select_query = "SELECT balance FROM wallet WHERE user_id = %s LIMIT 1"
+    cursor = connection.cursor()
+    cursor.execute(select_query, (user_id,))
+    wallet_balance = cursor.fetchone()[0]
+    return wallet_balance
+
+def update_wallet_balance(user_id, balance):
+    connection = mysql.connector.connect(
+        host='localhost',
+        database='mushee_bot',
+        user='root',
+        password=''
+    )
+    update_query = "UPDATE wallet SET balance = %s WHERE user_id = %s"
+    cursor = connection.cursor()
+    cursor.execute(update_query, (balance, user_id,))
+    connection.commit()
+
+def update_wallet_address(user_id, address):
+    connection = mysql.connector.connect(
+        host='localhost',
+        database='mushee_bot',
+        user='root',
+        password=''
+    )
+    update_query = "UPDATE wallet SET address = %s WHERE user_id = %s"
+    cursor = connection.cursor()
+    cursor.execute(update_query, (address, user_id,))
+    connection.commit()
+    
 @bot.message_handler(commands = ['start'])
 @bot.message_handler(func=lambda message: message.text == '🏠 Home')
 def send_welcome(message):
@@ -330,7 +420,7 @@ def handle_referrals(message):
             
             if referral_link_exists(user_id) is True:
                 response = user_referral_link(user_id)
-                bot.send_message(message.chat.id, response, reply_markup=subscribe_keyboard)
+                bot.send_message(message.chat.id, response, reply_markup=set_wallet_keyboard)
             elif referral_link_exists(user_id) is False:                   
                 @bot.message_handler(func=lambda message: message.chat.id == user_id and 'start=' in message.text)
                 def handle_referrals(message):
@@ -353,7 +443,7 @@ def handle_referrals(message):
                             new_balance = referral_user_balance(data) + 10
                             increment_referral_balance(data, new_balance)              
                         
-                    bot.reply_to(message, f"Welcome to our bot! You were referred by user ID {data}.", reply_markup=subscribe_keyboard,)
+                    bot.reply_to(message, f"Welcome to our bot! You were referred by user ID {data}.", reply_markup=set_wallet_keyboard,)
     except telebot.apihelper.ApiTelegramException as e:
         # Handle the error message appropriately
         print(e)
@@ -383,7 +473,6 @@ def subscribe_handler(message):
         #     return
     
         bot.reply_to(message, SUCCESS_MESSAGE, reply_markup=affiliate_keyboard)
-        wallet['airdrop_balance'] = user_airdrop
     except telebot.apihelper.ApiTelegramException as e:
         # Catch the ApiTelegramException and print the error message
         print(f"An error occurred: {e}")
@@ -396,7 +485,7 @@ def change_wallet_address(message):
         user_id = message.chat.id
 
         # Check if user already has a wallet then ask for wallet to be deleted
-        if wallet:
+        if user_id in select_wallet():
             bot.reply_to(message, "🆕 What is your new address? ")
             
              # Wait for user input
@@ -409,7 +498,7 @@ def change_wallet_address(message):
                     # Store the wallet address
                     bsc_address = match.group(0)
                     # Set wallet address to the wallet dictionary
-                    wallet[user_id] = bsc_address
+                    update_wallet_address(user_id, bsc_address)
                     # Successful reply
                     bot.reply_to(message, "Your wallet address has been saved. Thank you!", reply_markup=subscribe_keyboard)
                 else:
@@ -429,8 +518,8 @@ def prompt_for_wallet(message):
         user_id = message.chat.id
         
         # Check if user already has a wallet
-        if user_id in wallet:
-            bot.reply_to(message, "Your wallet address is {}.".format(wallet[user_id]), reply_markup=wallet_keyboard,)
+        if user_id in select_wallet():
+            bot.reply_to(message, f"Your wallet address is {select_wallet_by_user_id(user_id)}", reply_markup=wallet_keyboard,)
         else:   
             # Ask the user for their BEP-20 wallet address
             bot.reply_to(message, WALLET_MESSAGE, parse_mode='html')
@@ -444,10 +533,11 @@ def prompt_for_wallet(message):
                 if match:
                     # Store the wallet address
                     bsc_address = match.group(0)
-                    # Set wallet address to the wallet dictionary
-                    wallet[user_id] = bsc_address
+                    
+                    insert_wallet_address(user_id, bsc_address)
                     # Successful reply
                     bot.reply_to(message, "Your wallet address has been saved. Thank you!", reply_markup=subscribe_keyboard)
+                    update_wallet_balance(user_id, user_airdrop)
                 else:
                     bot.reply_to(message, "Unacceptable wallet address.")
             
@@ -464,10 +554,10 @@ def check_airdrop_balance(message):
     user_id = message.chat.id
     
     # Calculate the total balance for the user
-    total_balance = wallet.get('airdrop_balance', 0) + referral_user_balance(user_id)
+    total_balance = select_balance_by_user_id(user_id) + referral_user_balance(user_id)
     
     response = f"""
-    😲 You've earned {wallet['airdrop_balance']} MSH from our airdrop\n\n🔄️ Your referral count is {referral_user_count(user_id)} and your referral balance is {referral_user_balance(user_id)} MSH.\n\n🗿 Total balance is {total_balance} MSH
+    😲 You've earned {select_balance_by_user_id(user_id)} MSH from our airdrop\n\n🔄️ Your referral count is {referral_user_count(user_id)} and your referral balance is {referral_user_balance(user_id)} MSH.\n\n🗿 Total balance is {total_balance} MSH
     """
     bot.send_message(message.chat.id, response)
 
