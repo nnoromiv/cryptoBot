@@ -97,7 +97,7 @@ def send_welcome(message):
             bot.reply_to(message, "👇 Forward a referrer's link ", reply_markup=no_custom_keyboard)
             
             if referred_link != {}:
-                response = referred_link[user_id]
+                response = referred_link
                 bot.send_message(message.chat.id, response, reply_markup=home_keyboard)
             elif referred_link == {}:                    
                 @bot.message_handler(func=lambda message: message.chat.id == user_id and 'start=' in message.text)
