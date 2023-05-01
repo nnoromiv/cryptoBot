@@ -17,6 +17,7 @@ bot = telebot.TeleBot(BOTTOKEN)
 wallet = {}
 referral_data = {}
 user_airdrop = 60
+referred_link = {}
 SUCCESS_MESSAGE = os.environ['SUCCESS_MESSAGE']
 ERROR_MESSAGE = f"""
 👏 Follow <b><a href="https://twitter.com/musheehub">Mushee Twitter</a></b>
@@ -72,47 +73,55 @@ change_wallet_address = telebot.types.KeyboardButton('📰 Change address')
 airdrop_balance = telebot.types.KeyboardButton('🤑 Balance')
 referral = telebot.types.KeyboardButton('🧑‍🤝‍🧑 Referrals')
 
+no_custom_keyboard = telebot.types.ReplyKeyboardRemove()
 main_menu_keyboard = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True)
 home_keyboard = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True)
 subscribe_keyboard = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True)
 wallet_keyboard = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True)
 
-main_menu_keyboard.add(change_wallet_address, register_wallet, airdrop_balance, referral)
+
+main_menu_keyboard.add(register_wallet, airdrop_balance, referral, change_wallet_address)
 home_keyboard.add(mushee_subscribe)
 subscribe_keyboard.add(register_wallet, airdrop_balance, referral, main_menu)
-wallet_keyboard.add( referral, change_wallet_address, main_menu)
+wallet_keyboard.add(change_wallet_address, main_menu)
 
 @bot.message_handler(commands = ['start'])
 @bot.message_handler(func=lambda message: message.text == '🏠 Home')
 def send_welcome(message):
     try:
-        bot.reply_to(message, WELCOME_MESSAGE, parse_mode='html')
+        bot.reply_to(message, WELCOME_MESSAGE, reply_markup=no_custom_keyboard, parse_mode='html')
         # Get the user's unique ID
         user_id = message.chat.id
         # Check if the user was referred by someone
         if 'start=' not in message.text:        
-            bot.reply_to(message, "👇 Forward a referrer's link ")
+            bot.reply_to(message, "👇 Forward a referrer's link ", reply_markup=no_custom_keyboard)
             
-            @bot.message_handler(func=lambda message: message.chat.id == user_id and 'start=' in message.text)
-            def handle_referrals(message):
-                # Extract the referrer's ID from the message
-                referrer_id = message.text.split('start=')[1]
-                
-                # Add the referral data to the dictionary
-                referral_data[user_id] = {'referrer_id': referrer_id, 'referral_count': 0, 'referral_balance': 0}
-                
-                # Increment the referral count for the referrer
-                if referrer_id in referral_data:
-                    referral_data[referrer_id]['referral_count'] += 1
+            if referred_link != {}:
+                response = referred_link[user_id]
+                bot.send_message(message.chat.id, response, reply_markup=home_keyboard)
+            else:                    
+                @bot.message_handler(func=lambda message: message.chat.id == user_id and 'start=' in message.text)
+                def handle_referrals(message):
+                    # Extract the referrer's ID from the message
+                    if referred_link == {}:                    
+                            referred_link[user_id] = message.text
+                            referrer_id = referred_link[user_id].split('start=')[1]
                     
-                    # Add the referral bonus to the referrer's balance
-                    referral_data[referrer_id]['referral_balance'] += 10
+                    # Add the referral data to the dictionary
+                    referral_data[user_id] = {'referrer_id': referrer_id, 'referral_count': 0, 'referral_balance': 0}
                     
-                bot.reply_to(message, f"Welcome to our bot! You were referred by user ID {referrer_id}.", reply_markup=home_keyboard,)   
+                    # Increment the referral count for the referrer
+                    if referrer_id in referral_data:
+                        referral_data[referrer_id]['referral_count'] += 1
+                        
+                        # Add the referral bonus to the referrer's balance
+                        referral_data[referrer_id]['referral_balance'] += 10
+                        
+                    bot.reply_to(message, f"Welcome to our bot! You were referred by user ID {referrer_id}.", reply_markup=home_keyboard,)   
         else:
             # Add the user to the referral data dictionary with admin referrer
             referral_data[user_id] = {'referrer_id': None, 'referral_count': 0, 'referral_balance': 0,}
-            bot.reply_to(message, f"Welcome to our bot! You were referred by NOBODY.", reply_markup=home_keyboard,)
+            bot.reply_to(message, f"Welcome to our bot! You were referred by NOBODY.", reply_markup=home_keyboard)
             
     except Exception as e:
         print(e)
