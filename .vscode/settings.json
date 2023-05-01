@@ -1,10 +1,13 @@
 {
     "cSpell.words": [
         "Anylib",
+        "datas",
         "dotenv",
         "funnychat",
         "Juxv",
         "musheehub",
+        "mydatabase",
+        "pymongo",
         "Trustwallet",
         "tweepy"
     ]

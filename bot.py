@@ -1,9 +1,8 @@
 import os
-
 import telebot
-
 import re
-
+import mysql.connector
+from mysql.connector import Error
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
@@ -13,11 +12,103 @@ load_dotenv()
 BOTTOKEN = os.environ['BOTTOKEN']
 bot = telebot.TeleBot(BOTTOKEN)
 
+try:
+    # Create a connection
+    connection = mysql.connector.connect(
+        host='localhost',
+        database='mushee_bot',
+        user='root',
+        password=''
+    )
+
+    # instantiate a connection to the database
+    cursor = connection.cursor()
+
+    # execute a query to get a list of all databases
+    cursor.execute("SHOW DATABASES")
+    databases = cursor.fetchall()
+
+    # iterate over the list of databases and check if the specified database exists
+    database_name = "mushee_bot"
+    for db in cursor:
+        if db[0] == database_name:
+            cursor.execute("USE mushee_bot;")
+            break
+        else:
+            cursor.execute("CREATE DATABASE mushee_bot; USE mushee_bot;")
+
+    # Create the referral_link table
+    check_for_referral_link_table = """SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'mushee_bot' AND table_name = 'referral_link';"""
+    referral_link_table_creation_query = """CREATE TABLE referral_link (
+            user_id INT PRIMARY KEY,
+            referred_link VARCHAR(255)
+        );"""
+    select_referral_link_query = """SELECT * FROM referral_link"""
+
+    cursor.execute(check_for_referral_link_table)
+    referral_link_count = cursor.fetchone()[0]
+    if referral_link_count == 0:
+        cursor.execute(referral_link_table_creation_query)
+    elif referral_link_count == 1:
+        cursor.execute(select_referral_link_query)
+    else:
+        print('Referral link table cannot be found')
+
+    cursor.fetchall()  # read the result of the last query   
+
+    # Create the referral_data table
+    check_for_referral_data_table = """SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'mushee_bot' AND table_name = 'referral_data';"""
+    referral_data_table_creation_query = """CREATE TABLE referral_data (
+            user_id VARCHAR(255) PRIMARY KEY,
+            referrer_id VARCHAR(255),
+            referral_count INT,
+            referral_balance DECIMAL(18,8)
+        );"""
+    select_referral_data_query = """SELECT * FROM referral_data"""
+
+    cursor.execute(check_for_referral_data_table)
+    referral_data_count = cursor.fetchone()[0]
+    if referral_data_count == 0:
+        cursor.execute(referral_data_table_creation_query)
+    elif referral_data_count == 1:
+        cursor.execute(select_referral_data_query)
+    else:
+        print('Referral data table cannot be found')
+
+    cursor.fetchall()  # read the result of the last query   
+
+
+    # Create the wallet table
+    check_for_wallet_table = """SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'mushee_bot' AND table_name = 'wallet';"""
+    wallet_table_creation_query = """CREATE TABLE wallet (
+            user_id BIGINT PRIMARY KEY,
+            address VARCHAR(42) NOT NULL
+        );"""
+    select_wallet_query = """SELECT * FROM wallet"""
+        
+    cursor.execute(check_for_wallet_table)
+    wallet_count = cursor.fetchone()[0]
+    if wallet_count == 0:
+        cursor.execute(wallet_table_creation_query)
+    elif wallet_count == 1:
+        cursor.execute(select_wallet_query)
+    else:
+        print('Wallet table cannot be found')
+        
+        
+    cursor.fetchall()  # read the result of the last query   
+    cursor.close()
+
+    # close the connection
+    connection.close()
+except Exception as e:
+    print(f"Error encountered is: {e}")
+
 # Initializations
 wallet = {}
-referral_data = {}
 user_airdrop = 60
-referred_link = {}
+
+
 SUCCESS_MESSAGE = os.environ['SUCCESS_MESSAGE']
 ERROR_MESSAGE = f"""
 👏 Follow <b><a href="https://twitter.com/musheehub">Mushee Twitter</a></b>
@@ -72,65 +163,205 @@ register_wallet = telebot.types.KeyboardButton('😌 Wallet')
 change_wallet_address = telebot.types.KeyboardButton('📰 Change address')
 airdrop_balance = telebot.types.KeyboardButton('🤑 Balance')
 referral = telebot.types.KeyboardButton('🧑‍🤝‍🧑 Referrals')
+affiliate = telebot.types.KeyboardButton('➕ Affiliate')
 
 no_custom_keyboard = telebot.types.ReplyKeyboardRemove()
 main_menu_keyboard = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True)
 home_keyboard = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True)
 subscribe_keyboard = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True)
 wallet_keyboard = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True)
+affiliate_keyboard = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True)
 
 
 main_menu_keyboard.add(register_wallet, airdrop_balance, referral, change_wallet_address)
 home_keyboard.add(mushee_subscribe)
 subscribe_keyboard.add(register_wallet, airdrop_balance, referral, main_menu)
 wallet_keyboard.add(change_wallet_address, main_menu)
+affiliate_keyboard.add(affiliate)
+
+# Check if user_id exist in the table
+def referral_link_exists(user_id):
+    connection = mysql.connector.connect(
+        host='localhost',
+        database='mushee_bot',
+        user='root',
+        password=''
+    )
+    select_query = "SELECT COUNT(*) FROM referral_link WHERE user_id = %s"
+    cursor = connection.cursor()
+    cursor.execute(select_query, (user_id,))
+    count = cursor.fetchone()[0]
+    return count > 0
+# Collect the referral link using the user_id
+def user_referral_link(user_id):
+    connection = mysql.connector.connect(
+        host='localhost',
+        database='mushee_bot',
+        user='root',
+        password=''
+    )
+    select_query = "SELECT referred_link FROM referral_link WHERE user_id = %s"
+    cursor = connection.cursor()
+    cursor.execute(select_query, (user_id,))
+    referred_link = cursor.fetchone()[0]
+    return referred_link
+# Store the referral link
+def insert_referral_link(user_id, referred_link):
+    connection = mysql.connector.connect(
+        host='localhost',
+        database='mushee_bot',
+        user='root',
+        password=''
+    )
+    insert_query = "INSERT INTO referral_link (user_id, referred_link) VALUES (%s, %s)"
+    values = (user_id, referred_link)
+    cursor = connection.cursor()
+    cursor.execute(insert_query, values)
+    connection.commit()
+# Populate the referral data
+def populate_referral_data(user_id, referrer_id):
+    connection = mysql.connector.connect(
+        host='localhost',
+        database='mushee_bot',
+        user='root',
+        password=''
+    )
+    insert_query = "INSERT INTO referral_data (user_id, referrer_id, referral_count, referral_balance) VALUES (%s, %s, %s, %s)"
+    values = (user_id, referrer_id, 0, 0)
+    cursor = connection.cursor()
+    cursor.execute(insert_query, values)
+    connection.commit()
+# Get referral data of user
+def referral_user_data():
+    connection = mysql.connector.connect(
+        host='localhost',
+        database='mushee_bot',
+        user='root',
+        password=''
+    )
+    select_query = "SELECT referrer_id FROM referral_data LIMIT 1"
+    cursor = connection.cursor()
+    cursor.execute(select_query)
+    users = cursor.fetchall()
+    referral_datas = [referral_data[0] for referral_data in users]
+    return referral_datas
+
+def referrer_data(user_id):
+    connection = mysql.connector.connect(
+        host='localhost',
+        database='mushee_bot',
+        user='root',
+        password=''
+    )
+    select_query = "SELECT referrer_id FROM referral_data WHERE user_id = %s"
+    cursor = connection.cursor()
+    cursor.execute(select_query, (user_id,))
+    referrer_data = cursor.fetchone()[0]
+    return referrer_data
+
+def referral_user_count(user_id):
+    connection = mysql.connector.connect(
+        host='localhost',
+        database='mushee_bot',
+        user='root',
+        password=''
+    )
+    select_query = "SELECT referral_count FROM referral_data WHERE user_id = %s"
+    cursor = connection.cursor()
+    cursor.execute(select_query, (user_id,))
+    count = cursor.fetchone()[0]
+    return count
+
+def referral_user_balance(user_id):
+    connection = mysql.connector.connect(
+        host='localhost',
+        database='mushee_bot',
+        user='root',
+        password=''
+    )
+    select_query = "SELECT referral_balance FROM referral_data WHERE user_id = %s"
+    cursor = connection.cursor()
+    cursor.execute(select_query, (user_id,))
+    balance = cursor.fetchone()[0]
+    return balance
+
+def increment_referral_count(user_id, referral_count):
+    connection = mysql.connector.connect(
+        host='localhost',
+        database='mushee_bot',
+        user='root',
+        password=''
+    )
+    update_query = "UPDATE referral_data SET referral_count = %s WHERE user_id = %s"
+    cursor = connection.cursor()
+    cursor.execute(update_query, (referral_count, user_id,))
+    connection.commit()
+
+def increment_referral_balance(user_id, referral_balance):
+    connection = mysql.connector.connect(
+        host='localhost',
+        database='mushee_bot',
+        user='root',
+        password=''
+    )
+    update_query = "UPDATE referral_data SET referral_balance = %s WHERE user_id = %s"
+    cursor = connection.cursor()
+    cursor.execute(update_query, (referral_balance, user_id,))
+    connection.commit()
 
 @bot.message_handler(commands = ['start'])
 @bot.message_handler(func=lambda message: message.text == '🏠 Home')
 def send_welcome(message):
     try:
-        bot.reply_to(message, WELCOME_MESSAGE, reply_markup=no_custom_keyboard, parse_mode='html')
+        bot.reply_to(message, WELCOME_MESSAGE, reply_markup=home_keyboard, parse_mode='html')        
+    except telebot.apihelper.ApiTelegramException as e:
+        # Handle the error message appropriately
+        print(e)
+        bot.reply_to(message, f"An error has occurred: {e}")
+
+@bot.message_handler(func=lambda message: message.text == '➕ Affiliate')
+def handle_referrals(message):
+    try:
         # Get the user's unique ID
         user_id = message.chat.id
         # Check if the user was referred by someone
         if 'start=' not in message.text:        
             bot.reply_to(message, "👇 Forward a referrer's link ", reply_markup=no_custom_keyboard)
             
-            if referred_link != {}:
-                response = referred_link[user_id]
-                bot.send_message(message.chat.id, response, reply_markup=home_keyboard)
-            elif referred_link == {}:                    
+            if referral_link_exists(user_id) is True:
+                response = user_referral_link(user_id)
+                bot.send_message(message.chat.id, response, reply_markup=subscribe_keyboard)
+            elif referral_link_exists(user_id) is False:                   
                 @bot.message_handler(func=lambda message: message.chat.id == user_id and 'start=' in message.text)
                 def handle_referrals(message):
                     # Extract the referrer's ID from the message
-                    if referred_link == {}:                    
-                            referred_link[user_id] = message.text
-                            referrer_id = referred_link[user_id].split('start=')[1]
+                    if referral_link_exists(user_id) is False:      
+                            insert_referral_link(user_id, message.text)             
+                            referrer = message.text.split('start=')[1]
                     
                     # Add the referral data to the dictionary
-                    referral_data[user_id] = {'referrer_id': referrer_id, 'referral_count': 0, 'referral_balance': 0}
+                    populate_referral_data(user_id, referrer)
+                    referral_user_data()
                     
-                    # Increment the referral count for the referrer
-                    if referrer_id in referral_data:
-                        referral_data[referrer_id]['referral_count'] += 1
+                    for data in referral_user_data():                                        
+                        # Increment the referral count for the referrer
+                        if data == referrer:
+                            new_count = referral_user_count(data)+ 1
+                            increment_referral_count(data, new_count)
+                                    
+                            # Add the referral bonus to the referrer's balance
+                            new_balance = referral_user_balance(data) + 10
+                            increment_referral_balance(data, new_balance)              
                         
-                        # Add the referral bonus to the referrer's balance
-                        referral_data[referrer_id]['referral_balance'] += 10
-                        
-                    bot.reply_to(message, f"Welcome to our bot! You were referred by user ID {referrer_id}.", reply_markup=home_keyboard,)   
-        else:
-            # Add the user to the referral data dictionary with admin referrer
-            referral_data[user_id] = {'referrer_id': None, 'referral_count': 0, 'referral_balance': 0,}
-            bot.reply_to(message, f"Welcome to our bot! You were referred by NOBODY.", reply_markup=home_keyboard)
-            
+                    bot.reply_to(message, f"Welcome to our bot! You were referred by user ID {data}.", reply_markup=subscribe_keyboard,)
     except telebot.apihelper.ApiTelegramException as e:
         # Handle the error message appropriately
         print(e)
-        bot.reply_to(message, "An error has occurred")
-
+        bot.reply_to(message, f"An error has occurred: {e}")
+        
 @bot.message_handler(func=lambda message: message.text == '💢 Main Menu')
 def send_commands(message):
-    response = "Main Menu"
+    response = "💢 Main Menu"
     bot.send_message(message.chat.id, response, reply_markup=main_menu_keyboard)
 
 @bot.message_handler(func=lambda message: message.text == '🫡 Join us')
@@ -151,7 +382,7 @@ def subscribe_handler(message):
         #     bot.reply_to(message, ERROR_MESSAGE)
         #     return
     
-        bot.reply_to(message, SUCCESS_MESSAGE, reply_markup=subscribe_keyboard)
+        bot.reply_to(message, SUCCESS_MESSAGE, reply_markup=affiliate_keyboard)
         wallet['airdrop_balance'] = user_airdrop
     except telebot.apihelper.ApiTelegramException as e:
         # Catch the ApiTelegramException and print the error message
@@ -233,10 +464,10 @@ def check_airdrop_balance(message):
     user_id = message.chat.id
     
     # Calculate the total balance for the user
-    total_balance = wallet.get('airdrop_balance', 0) + referral_data[user_id]['referral_balance']
+    total_balance = wallet.get('airdrop_balance', 0) + referral_user_balance(user_id)
     
     response = f"""
-    😲 You've earned {wallet['airdrop_balance']} MSH from our airdrop\n\n🔄️ Your referral count is {referral_data[user_id]['referral_count']} and your referral balance is {referral_data[user_id]['referral_balance']} MSH.\n\n🗿 Total balance is {total_balance} MSH
+    😲 You've earned {wallet['airdrop_balance']} MSH from our airdrop\n\n🔄️ Your referral count is {referral_user_count(user_id)} and your referral balance is {referral_user_balance(user_id)} MSH.\n\n🗿 Total balance is {total_balance} MSH
     """
     bot.send_message(message.chat.id, response)
 
@@ -244,18 +475,8 @@ def check_airdrop_balance(message):
 def show_referral_info(message):
     # Get the user's unique ID
     user_id = message.chat.id
-    
-    # Check if the user has a referrer
-    if referral_data[user_id]['referrer_id'] is not None:
-        # Get the referrer's ID and balance
-        referrer_id = referral_data[user_id]['referrer_id']
         
-        # Send a message with the referral info
-        bot.reply_to(message, f"You were referred by user ID {referrer_id}.\n\n Your referral count is {referral_data[user_id]['referral_count']} and your referral balance is {referral_data[user_id]['referral_balance']} MSH.\n\n🔗 Your referral link is https://t.me/{bot.get_me().username}?start={user_id}")
-        
-    else:
-        # Send a message saying the user has no referrer
-        bot.reply_to(message, f"😔 You were not referred by anyone. \n\n👉 Your referral count is {referral_data[user_id]['referral_count']} and your referral balance is {referral_data[user_id]['referral_balance']} MSH.\n\n🔗 Your referral link is https://t.me/{bot.get_me().username}?start={user_id}")
+    bot.reply_to(message, f"You were referred by user ID {referrer_data(user_id)}.\n\n Your referral count is {referral_user_count(user_id)} and your referral balance is {int(referral_user_balance(user_id))} MSH.\n\n🔗 Your referral link is https://t.me/{bot.get_me().username}?start={user_id}")
 
 # @bot.message_handler(func=lambda message:True)
 # def echo_all(message):
@@ -264,4 +485,4 @@ def show_referral_info(message):
 try:
     bot.infinity_polling()
 except Exception as e:
-    print(e)
+    print(f"Error ocurred: {e}")
