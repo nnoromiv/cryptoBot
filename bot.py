@@ -44,7 +44,8 @@ try:
         host='containers-us-west-173.railway.app',
         database='railway',
         user='root',
-        password='uymI8WdIq8XOYcNeqGAG'
+        password='uymI8WdIq8XOYcNeqGAG',
+        port=8019
     )
 
     # instantiate a connection to the database
@@ -53,18 +54,20 @@ try:
     # execute a query to get a list of all databases
     cursor.execute("SHOW DATABASES")
     databases = cursor.fetchall()
+    
+    print(databases)
 
     # iterate over the list of databases and check if the specified database exists
-    database_name = "mushee_bot"
+    database_name = "railway"
     for db in cursor:
         if db[0] == database_name:
-            cursor.execute("USE mushee_bot;")
+            cursor.execute("USE railway;")
             break
         else:
-            cursor.execute("CREATE DATABASE mushee_bot; USE mushee_bot;")
+            cursor.execute("CREATE DATABASE railway; USE railway;")
 
     # Create the referral_link table
-    check_for_referral_link_table = """SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'mushee_bot' AND table_name = 'referral_link';"""
+    check_for_referral_link_table = """SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'railway' AND table_name = 'referral_link';"""
     referral_link_table_creation_query = """CREATE TABLE referral_link (
             user_id INT PRIMARY KEY,
             referred_link VARCHAR(255)
@@ -83,7 +86,7 @@ try:
     cursor.fetchall()  # read the result of the last query   
 
     # Create the referral_data table
-    check_for_referral_data_table = """SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'mushee_bot' AND table_name = 'referral_data';"""
+    check_for_referral_data_table = """SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'railway' AND table_name = 'referral_data';"""
     referral_data_table_creation_query = """CREATE TABLE referral_data (
             user_id VARCHAR(255) PRIMARY KEY,
             referrer_id VARCHAR(255),
@@ -105,7 +108,7 @@ try:
 
 
     # Create the wallet table
-    check_for_wallet_table = """SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'mushee_bot' AND table_name = 'wallet';"""
+    check_for_wallet_table = """SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'railway' AND table_name = 'wallet';"""
     wallet_table_creation_query = """CREATE TABLE wallet (
             user_id BIGINT PRIMARY KEY,
             address VARCHAR(42) NOT NULL,
@@ -234,10 +237,11 @@ def referral_link_exists(user_id):
     "referral_link" table of the "mushee_bot" database.
     """
     connection = mysql.connector.connect(
-        host='localhost',
-        database='mushee_bot',
+        host='containers-us-west-173.railway.app',
+        database='railway',
         user='root',
-        password=''
+        password='uymI8WdIq8XOYcNeqGAG',
+        port=8019
     )
     select_query = "SELECT COUNT(*) FROM referral_link WHERE user_id = %s"
     cursor = connection.cursor()
@@ -255,10 +259,11 @@ def user_referral_link(user_id):
     :return: the referred link associated with the user ID passed as a parameter.
     """
     connection = mysql.connector.connect(
-        host='localhost',
-        database='mushee_bot',
+        host='containers-us-west-173.railway.app',
+        database='railway',
         user='root',
-        password=''
+        password='uymI8WdIq8XOYcNeqGAG',
+        port=8019
     )
     select_query = "SELECT referred_link FROM referral_link WHERE user_id = %s"
     cursor = connection.cursor()
@@ -275,10 +280,11 @@ def insert_referral_link(user_id, referred_link):
     unique URL or code that identifies the user as the referrer
     """
     connection = mysql.connector.connect(
-        host='localhost',
-        database='mushee_bot',
+        host='containers-us-west-173.railway.app',
+        database='railway',
         user='root',
-        password=''
+        password='uymI8WdIq8XOYcNeqGAG',
+        port=8019
     )
     insert_query = "INSERT INTO referral_link (user_id, referred_link) VALUES (%s, %s)"
     values = (user_id, referred_link)
@@ -294,10 +300,11 @@ def populate_referral_data(user_id, referrer_id):
     :param referrer_id: The ID of the user who referred the new user
     """
     connection = mysql.connector.connect(
-        host='localhost',
-        database='mushee_bot',
+        host='containers-us-west-173.railway.app',
+        database='railway',
         user='root',
-        password=''
+        password='uymI8WdIq8XOYcNeqGAG',
+        port=8019
     )
     insert_query = "INSERT INTO referral_data (user_id, referrer_id, referral_count, referral_balance) VALUES (%s, %s, %s, %s)"
     values = (user_id, referrer_id, 0, 0)
@@ -312,10 +319,11 @@ def referral_user_data():
     :return: a list of referrer IDs from the "referral_data" table in the "mushee_bot" database.
     """
     connection = mysql.connector.connect(
-        host='localhost',
-        database='mushee_bot',
+        host='containers-us-west-173.railway.app',
+        database='railway',
         user='root',
-        password=''
+        password='uymI8WdIq8XOYcNeqGAG',
+        port=8019
     )
     select_query = "SELECT referrer_id FROM referral_data LIMIT 1"
     cursor = connection.cursor()
@@ -335,10 +343,11 @@ def referrer_data(user_id):
     the user_id provided as an argument.
     """
     connection = mysql.connector.connect(
-        host='localhost',
-        database='mushee_bot',
+        host='containers-us-west-173.railway.app',
+        database='railway',
         user='root',
-        password=''
+        password='uymI8WdIq8XOYcNeqGAG',
+        port=8019
     )
     select_query = "SELECT referrer_id FROM referral_data WHERE user_id = %s"
     cursor = connection.cursor()
@@ -356,10 +365,11 @@ def referral_user_count(user_id):
     mushee_bot database.
     """
     connection = mysql.connector.connect(
-        host='localhost',
-        database='mushee_bot',
+        host='containers-us-west-173.railway.app',
+        database='railway',
         user='root',
-        password=''
+        password='uymI8WdIq8XOYcNeqGAG',
+        port=8019
     )
     select_query = "SELECT referral_count FROM referral_data WHERE user_id = %s"
     cursor = connection.cursor()
@@ -376,10 +386,11 @@ def referral_user_balance(user_id):
     :return: the referral balance of a user with the given user_id.
     """
     connection = mysql.connector.connect(
-        host='localhost',
-        database='mushee_bot',
+        host='containers-us-west-173.railway.app',
+        database='railway',
         user='root',
-        password=''
+        password='uymI8WdIq8XOYcNeqGAG',
+        port=8019
     )
     select_query = "SELECT referral_balance FROM referral_data WHERE user_id = %s"
     cursor = connection.cursor()
@@ -396,10 +407,11 @@ def increment_referral_count(user_id, referral_count):
     :param referral_count: The number of referrals that the user has made
     """
     connection = mysql.connector.connect(
-        host='localhost',
-        database='mushee_bot',
+        host='containers-us-west-173.railway.app',
+        database='railway',
         user='root',
-        password=''
+        password='uymI8WdIq8XOYcNeqGAG',
+        port=8019
     )
     update_query = "UPDATE referral_data SET referral_count = %s WHERE user_id = %s"
     cursor = connection.cursor()
@@ -416,10 +428,11 @@ def increment_referral_balance(user_id, referral_balance):
     given user ID
     """
     connection = mysql.connector.connect(
-        host='localhost',
-        database='mushee_bot',
+        host='containers-us-west-173.railway.app',
+        database='railway',
         user='root',
-        password=''
+        password='uymI8WdIq8XOYcNeqGAG',
+        port=8019
     )
     update_query = "UPDATE referral_data SET referral_balance = %s WHERE user_id = %s"
     cursor = connection.cursor()
@@ -437,10 +450,11 @@ def insert_wallet_data(user_id, address):
     database
     """
     connection = mysql.connector.connect(
-        host='localhost',
-        database='mushee_bot',
+        host='containers-us-west-173.railway.app',
+        database='railway',
         user='root',
-        password=''
+        password='uymI8WdIq8XOYcNeqGAG',
+        port=8019
     )
     insert_query = "INSERT INTO wallet (user_id, address) VALUES (%s, %s)"
     values = (user_id, address)
@@ -455,10 +469,11 @@ def select_wallet():
     :return: a list of user IDs from the "wallet" table in the "mushee_bot" database.
     """
     connection = mysql.connector.connect(
-        host='localhost',
-        database='mushee_bot',
+        host='containers-us-west-173.railway.app',
+        database='railway',
         user='root',
-        password=''
+        password='uymI8WdIq8XOYcNeqGAG',
+        port=8019
     )
     select_query = "SELECT user_id FROM wallet LIMIT 1"
     cursor = connection.cursor()
@@ -478,10 +493,11 @@ def select_wallet_by_user_id(user_id):
     "mushee_bot" database.
     """
     connection = mysql.connector.connect(
-        host='localhost',
-        database='mushee_bot',
+        host='containers-us-west-173.railway.app',
+        database='railway',
         user='root',
-        password=''
+        password='uymI8WdIq8XOYcNeqGAG',
+        port=8019
     )
     select_query = "SELECT address FROM wallet WHERE user_id = %s LIMIT 1"
     cursor = connection.cursor()
@@ -498,10 +514,11 @@ def insert_wallet_address(user_id, address):
     :param address: The wallet address that the user wants to insert into the database
     """
     connection = mysql.connector.connect(
-        host='localhost',
-        database='mushee_bot',
+        host='containers-us-west-173.railway.app',
+        database='railway',
         user='root',
-        password=''
+        password='uymI8WdIq8XOYcNeqGAG',
+        port=8019
     )
     insert_query = "INSERT INTO wallet (user_id, address, balance) VALUES (%s, %s, %s)"
     values = (user_id, address, 0)
@@ -518,10 +535,11 @@ def select_balance_by_user_id(user_id):
     :return: the balance of a user's wallet from the database, based on their user ID.
     """
     connection = mysql.connector.connect(
-        host='localhost',
-        database='mushee_bot',
+        host='containers-us-west-173.railway.app',
+        database='railway',
         user='root',
-        password=''
+        password='uymI8WdIq8XOYcNeqGAG',
+        port=8019
     )
     select_query = "SELECT balance FROM wallet WHERE user_id = %s LIMIT 1"
     cursor = connection.cursor()
@@ -538,10 +556,11 @@ def update_wallet_balance(user_id, balance):
     :param balance: The new balance that you want to update for the user's wallet
     """
     connection = mysql.connector.connect(
-        host='localhost',
-        database='mushee_bot',
+        host='containers-us-west-173.railway.app',
+        database='railway',
         user='root',
-        password=''
+        password='uymI8WdIq8XOYcNeqGAG',
+        port=8019
     )
     update_query = "UPDATE wallet SET balance = %s WHERE user_id = %s"
     cursor = connection.cursor()
@@ -557,10 +576,11 @@ def update_wallet_address(user_id, address):
     :param address: The new wallet address that needs to be updated in the database
     """
     connection = mysql.connector.connect(
-        host='localhost',
-        database='mushee_bot',
+        host='containers-us-west-173.railway.app',
+        database='railway',
         user='root',
-        password=''
+        password='uymI8WdIq8XOYcNeqGAG',
+        port=8019
     )
     update_query = "UPDATE wallet SET address = %s WHERE user_id = %s"
     cursor = connection.cursor()
