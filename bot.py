@@ -41,10 +41,10 @@ bot = telebot.TeleBot(BOTTOKEN)
 try:
     # Create a connection
     connection = mysql.connector.connect(
-        host='localhost',
-        database='mushee_bot',
-        user='root',
-        password=''
+        host='NNOROMIV.mysql.pythonanywhere-services.com',
+        database='NNOROMIV$mushee_bot',
+        user='NNOROMIV',
+        password='musheebotsql3'
     )
 
     # instantiate a connection to the database

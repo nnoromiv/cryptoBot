@@ -5,10 +5,12 @@
         "dotenv",
         "funnychat",
         "Juxv",
+        "musheebotsql",
         "musheehub",
         "mydatabase",
         "pymongo",
         "pytest",
+        "pythonanywhere",
         "Trustwallet",
         "tweepy"
     ],
