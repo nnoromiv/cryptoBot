@@ -202,15 +202,14 @@ home_keyboard.add(mushee_subscribe)
 subscribe_keyboard.add(register_wallet, airdrop_balance, referral, main_menu)
 wallet_keyboard.add(change_wallet_address, main_menu)
 affiliate_keyboard.add(affiliate)
-# Check if user_id exist in the table 
-def referral_link_exists(user_id):
+
+def execute_query(query, params=None):
     """
-    The function checks if a referral link exists for a given user ID in a MySQL database.
+    Executes the given SQL query on the MySQL database.
     
-    :param user_id: The user ID is a unique identifier for a user in the system. It is used as a
-    parameter in the SQL query to check if a referral link exists for that user
-    :return: a boolean value indicating whether a referral link exists for a given user ID in the
-    "referral_link" table of the "mushee_bot" database.
+    :param query: The SQL query to execute.
+    :param params: Optional parameter that contains any variables that are used in the SQL query.
+    :return: The result of the query, as returned by the MySQL database.
     """
     connection = mysql.connector.connect(
         host=RAILWAY_HOST,
@@ -219,11 +218,27 @@ def referral_link_exists(user_id):
         password=RAILWAY_PASSWORD,
         port=RAILWAY_PORT
     )
-    select_query = "SELECT COUNT(*) FROM referral_link WHERE user_id = %s"
     cursor = connection.cursor()
-    cursor.execute(select_query, (user_id,))
-    count = cursor.fetchone()[0]
+    if params:
+        cursor.execute(query, params)
+    else:
+        cursor.execute(query)
+    result = cursor.fetchone()[0]
+    cursor.close()
+    connection.close()
+    return result
+
+def referral_link_exists(user_id):
+    """
+    Checks if a referral link exists for a given user ID in the MySQL database.
+    
+    :param user_id: The user ID to check.
+    :return: True if a referral link exists, False otherwise.
+    """
+    select_query = "SELECT COUNT(*) FROM referral_link WHERE user_id = %s"
+    count = execute_query(select_query, (user_id,))
     return count > 0
+
 def user_referral_link(user_id):
     """
     The function retrieves a referred link from a MySQL database based on a user ID.
@@ -232,18 +247,10 @@ def user_referral_link(user_id):
     retrieve the referral link associated with that user from the database
     :return: the referred link associated with the user ID passed as a parameter.
     """
-    connection = mysql.connector.connect(
-        host=RAILWAY_HOST,
-        database=RAILWAY_DB,
-        user=RAILWAY_USER,
-        password=RAILWAY_PASSWORD,
-        port=RAILWAY_PORT
-    )
     select_query = "SELECT referred_link FROM referral_link WHERE user_id = %s"
-    cursor = connection.cursor()
-    cursor.execute(select_query, (user_id,))
-    referred_link = cursor.fetchone()[0]
+    referred_link = execute_query(select_query, (user_id,))
     return referred_link
+
 def insert_referral_link(user_id, referred_link):
     """
     This function inserts a user's referral link into a MySQL database.
@@ -252,18 +259,19 @@ def insert_referral_link(user_id, referred_link):
     :param referred_link: The referral link that the user has shared with someone else. It could be a
     unique URL or code that identifies the user as the referrer
     """
-    connection = mysql.connector.connect(
+    with mysql.connector.connect(
         host=RAILWAY_HOST,
         database=RAILWAY_DB,
         user=RAILWAY_USER,
         password=RAILWAY_PASSWORD,
         port=RAILWAY_PORT
-    )
-    insert_query = "INSERT INTO referral_link (user_id, referred_link) VALUES (%s, %s)"
-    values = (user_id, referred_link)
-    cursor = connection.cursor()
-    cursor.execute(insert_query, values)
-    connection.commit()
+    ) as connection:
+        insert_query = "INSERT INTO referral_link (user_id, referred_link) VALUES (%s, %s)"
+        values = (user_id, referred_link)
+        with connection.cursor() as cursor:
+            cursor.execute(insert_query, values)
+        connection.commit()
+
 def populate_referral_data(user_id, referrer_id):
     """
     This function populates referral data for a user with their user ID and referrer ID.
@@ -271,18 +279,19 @@ def populate_referral_data(user_id, referrer_id):
     :param user_id: The ID of the user for whom referral data is being populated
     :param referrer_id: The ID of the user who referred the new user
     """
-    connection = mysql.connector.connect(
+    with mysql.connector.connect(
         host=RAILWAY_HOST,
         database=RAILWAY_DB,
         user=RAILWAY_USER,
         password=RAILWAY_PASSWORD,
         port=RAILWAY_PORT
-    )
-    insert_query = "INSERT INTO referral_data (user_id, referrer_id, referral_count, referral_balance) VALUES (%s, %s, %s, %s)"
-    values = (user_id, referrer_id, 0, 0)
-    cursor = connection.cursor()
-    cursor.execute(insert_query, values)
-    connection.commit()
+    ) as connection:
+        insert_query = "INSERT INTO referral_data (user_id, referrer_id, referral_count, referral_balance) VALUES (%s, %s, %s, %s)"
+        values = (user_id, referrer_id, 0, 0)
+        with connection.cursor() as cursor:
+            cursor.execute(insert_query, values)
+        connection.commit()
+
 def referral_user_data():
     """
     This function retrieves the referrer IDs from the "referral_data" table in the "mushee_bot"
@@ -296,12 +305,12 @@ def referral_user_data():
         password=RAILWAY_PASSWORD,
         port=RAILWAY_PORT
     )
-    select_query = "SELECT referrer_id FROM referral_data LIMIT 1"
+    select_query = "SELECT referrer_id FROM referral_data"
     cursor = connection.cursor()
     cursor.execute(select_query)
-    users = cursor.fetchall()
-    referral_datas = [referral_data[0] for referral_data in users]
+    referral_datas = [referral_data[0] for referral_data in cursor]
     return referral_datas
+
 def referrer_data(user_id):
     """
     The function retrieves the referrer ID for a given user ID from a MySQL database.
@@ -312,17 +321,8 @@ def referrer_data(user_id):
     :return: the referrer_id of a user from the referral_data table in the mushee_bot database, based on
     the user_id provided as an argument.
     """
-    connection = mysql.connector.connect(
-        host=RAILWAY_HOST,
-        database=RAILWAY_DB,
-        user=RAILWAY_USER,
-        password=RAILWAY_PASSWORD,
-        port=RAILWAY_PORT
-    )
     select_query = "SELECT referrer_id FROM referral_data WHERE user_id = %s"
-    cursor = connection.cursor()
-    cursor.execute(select_query, (user_id,))
-    referrer_data = cursor.fetchone()[0]
+    referrer_data = execute_query(select_query, (user_id,))
     return referrer_data
 def referral_user_count(user_id):
     """
@@ -333,17 +333,8 @@ def referral_user_count(user_id):
     :return: the referral count of a user with the given user_id from the referral_data table in the
     mushee_bot database.
     """
-    connection = mysql.connector.connect(
-        host=RAILWAY_HOST,
-        database=RAILWAY_DB,
-        user=RAILWAY_USER,
-        password=RAILWAY_PASSWORD,
-        port=RAILWAY_PORT
-    )
     select_query = "SELECT referral_count FROM referral_data WHERE user_id = %s"
-    cursor = connection.cursor()
-    cursor.execute(select_query, (user_id,))
-    count = cursor.fetchone()[0]
+    count = execute_query(select_query, (user_id,))
     return count
 def referral_user_balance(user_id):
     """
@@ -353,17 +344,8 @@ def referral_user_balance(user_id):
     This function retrieves the referral_balance for the user with the given user_id
     :return: the referral balance of a user with the given user_id.
     """
-    connection = mysql.connector.connect(
-        host=RAILWAY_HOST,
-        database=RAILWAY_DB,
-        user=RAILWAY_USER,
-        password=RAILWAY_PASSWORD,
-        port=RAILWAY_PORT
-    )
     select_query = "SELECT referral_balance FROM referral_data WHERE user_id = %s"
-    cursor = connection.cursor()
-    cursor.execute(select_query, (user_id,))
-    balance = cursor.fetchone()[0]
+    balance = execute_query(select_query, (user_id,))
     return balance
 def increment_referral_count(user_id, referral_count):
     """
@@ -455,17 +437,8 @@ def select_wallet_by_user_id(user_id):
     :return: the wallet address of the user with the given user_id from the "wallet" table in the
     "mushee_bot" database.
     """
-    connection = mysql.connector.connect(
-        host=RAILWAY_HOST,
-        database=RAILWAY_DB,
-        user=RAILWAY_USER,
-        password=RAILWAY_PASSWORD,
-        port=RAILWAY_PORT
-    )
     select_query = "SELECT address FROM wallet WHERE user_id = %s LIMIT 1"
-    cursor = connection.cursor()
-    cursor.execute(select_query, (user_id,))
-    wallet_address = cursor.fetchone()[0]
+    wallet_address = execute_query(select_query, (user_id,))
     return wallet_address
 def insert_wallet_address(user_id, address):
     """
@@ -495,17 +468,8 @@ def select_balance_by_user_id(user_id):
     retrieve the wallet balance associated with that user
     :return: the balance of a user's wallet from the database, based on their user ID.
     """
-    connection = mysql.connector.connect(
-        host=RAILWAY_HOST,
-        database=RAILWAY_DB,
-        user=RAILWAY_USER,
-        password=RAILWAY_PASSWORD,
-        port=RAILWAY_PORT
-    )
     select_query = "SELECT balance FROM wallet WHERE user_id = %s LIMIT 1"
-    cursor = connection.cursor()
-    cursor.execute(select_query, (user_id,))
-    wallet_balance = cursor.fetchone()[0]
+    wallet_balance = execute_query(select_query, (user_id,))
     return wallet_balance
 def update_wallet_balance(user_id, balance):
     """
@@ -563,7 +527,6 @@ def send_welcome(message):
         bot.reply_to(message, WELCOME_MESSAGE, reply_markup=home_keyboard, parse_mode='html')        
     except telebot.apihelper.ApiTelegramException as e:
         # Handle the error message appropriately
-        print(e)
         bot.reply_to(message, f"An error has occurred: {e}")
 # The above code is defining a message handler for a Telegram bot using the Python programming
 # language. Specifically, it is using a lambda function to check if the user's message text is equal
@@ -613,8 +576,7 @@ def handle_referrals(message):
                     bot.reply_to(message, f"Welcome to our bot! You were referred by user ID {data}.", reply_markup=set_wallet_keyboard,)
     except telebot.apihelper.ApiTelegramException as e:
         # Handle the error message appropriately
-        print(e)
-        bot.reply_to(message, f"An error has occurred: {e}") 
+        bot.reply_to(message, f"An error has occurred") 
 # The above code is defining a message handler for the bot. It will handle messages that have the text
 # "💢 Main Menu". When a user sends a message with this text, the function associated with this
 # handler will be executed.
