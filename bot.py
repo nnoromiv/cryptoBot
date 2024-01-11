@@ -66,7 +66,7 @@ try:
     check_for_referral_link_table = """SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'railway' AND table_name = 'referral_link';"""
     referral_link_table_creation_query = """CREATE TABLE referral_link (
             user_id INT PRIMARY KEY,
-            referred_link VARCHAR(255)
+            referred_link VARCHAR(100)
         );"""
     select_referral_link_query = """SELECT * FROM referral_link"""
     cursor.execute(check_for_referral_link_table)
@@ -81,8 +81,8 @@ try:
     # Create the referral_data table
     check_for_referral_data_table = """SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'railway' AND table_name = 'referral_data';"""
     referral_data_table_creation_query = """CREATE TABLE referral_data (
-            user_id VARCHAR(255) PRIMARY KEY,
-            referrer_id VARCHAR(255),
+            user_id VARCHAR(100) PRIMARY KEY,
+            referrer_id VARCHAR(100),
             referral_count INT,
             referral_balance DECIMAL(18,8)
         );"""
@@ -122,25 +122,25 @@ except Error as e:
 user_airdrop = 50
 SUCCESS_MESSAGE = os.environ['SUCCESS_MESSAGE']
 ERROR_MESSAGE = f"""
-👏 Follow <b><a href="https://twitter.com/musheehub">Mushee Twitter</a></b>
+👏 Follow <b><a href="https://twitter.com/cryptohub">Crypto Twitter</a></b>
 
-👏 Join <b><a href="https://t.me/musheehub">Mushee Telegram Channel</a></b>
+👏 Join <b><a href="https://t.me/cryptohub">Crypto Telegram Channel</a></b>
 
-👏 Join <b><a href="https://t.me/musheehub">Mushee Telegram Group</a></b>
+👏 Join <b><a href="https://t.me/cryptohub">Crypto Telegram Group</a></b>
 
 😒 Connect with us to continue
 """
 WALLET_MESSAGE = f"""
 🗒️ What is your BEP-20(BSC) wallet address!!?
 
-<b><i> Please submit your Trustwallet or SafePal address. Address must be from a Decentralized crypto platform</i></b>
+<b><i> Please submit your Trustwallet or SafePal address. Address must be from a Decentralized  platform</i></b>
 """
 WELCOME_MESSAGE = f"""
 👋 Hello, Old sport! 
 
-🌞 1 MSH = $0.3
-⛅ Get <b>50 MSH</b> for joining and completing task
-🌬️ Get <b>5 MSH</b> per referral 
+🌞 1 tPNA = $0.3
+⛅ Get <b>50 tPNA</b> for joining and completing task
+🌬️ Get <b>5 tPNA</b> per referral 
 
 📝 Airdrop will end soon...
 
@@ -148,11 +148,11 @@ WELCOME_MESSAGE = f"""
 
 🗒️ <b>TASK:</b>
 
-👏 Follow <b><a href="https://twitter.com/musheehub">Mushee Twitter</a></b>
+👏 Follow <b><a href="https://twitter.com/cryptohub">Crypto Twitter</a></b>
 
-👏 Join <b><a href="https://t.me/musheehub">Mushee Telegram Channel</a></b>
+👏 Join <b><a href="https://t.me/cryptohub">Crypto Telegram Channel</a></b>
 
-👏 Join <b><a href="https://t.me/musheehub">Mushee Telegram Group</a></b>
+👏 Join <b><a href="https://t.me/cryptohub">Crypto Telegram Group</a></b>
 
 🧏 Use only positive words to chat in the group otherwise you will miss the big opportunity
 
@@ -171,7 +171,7 @@ BSC_ADDRESS_REGEX = r'^0x([A-Fa-f0-9]{40})$'
 # accessing an affiliate program.
 home_button = telebot.types.KeyboardButton('🏠 Home')
 main_menu = telebot.types.KeyboardButton('💢 Main Menu')
-mushee_subscribe = telebot.types.KeyboardButton('🫡 Join us')
+crypto_subscribe = telebot.types.KeyboardButton('🫡 Join us')
 register_wallet = telebot.types.KeyboardButton('😌 Wallet')
 change_wallet_address = telebot.types.KeyboardButton('📰 Change address')
 airdrop_balance = telebot.types.KeyboardButton('🤑 Balance')
@@ -198,7 +198,7 @@ set_wallet_keyboard = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True)
 # main menu, set wallet menu, home menu, subscribe menu, wallet menu, and affiliate menu.
 main_menu_keyboard.add(register_wallet, airdrop_balance, referral, change_wallet_address)
 set_wallet_keyboard.add(register_wallet)
-home_keyboard.add(mushee_subscribe)
+home_keyboard.add(crypto_subscribe)
 subscribe_keyboard.add(register_wallet, airdrop_balance, referral, main_menu)
 wallet_keyboard.add(change_wallet_address, main_menu)
 affiliate_keyboard.add(affiliate)
@@ -294,9 +294,9 @@ def populate_referral_data(user_id, referrer_id):
 
 def referral_user_data():
     """
-    This function retrieves the referrer IDs from the "referral_data" table in the "mushee_bot"
+    This function retrieves the referrer IDs from the "referral_data" table in the "crypto_bot"
     database.
-    :return: a list of referrer IDs from the "referral_data" table in the "mushee_bot" database.
+    :return: a list of referrer IDs from the "referral_data" table in the "crypto_bot" database.
     """
     connection = mysql.connector.connect(
         host=RAILWAY_HOST,
@@ -318,7 +318,7 @@ def referrer_data(user_id):
     :param user_id: The user ID is a parameter that is passed to the function. It is used to retrieve
     the referrer ID from the database for the given user. The referrer ID is the ID of the user who
     referred the current user to the platform or service
-    :return: the referrer_id of a user from the referral_data table in the mushee_bot database, based on
+    :return: the referrer_id of a user from the referral_data table in the crypto_bot database, based on
     the user_id provided as an argument.
     """
     select_query = "SELECT referrer_id FROM referral_data WHERE user_id = %s"
@@ -331,7 +331,7 @@ def referral_user_count(user_id):
     :param user_id: The user ID is a unique identifier for a specific user in the referral_data table.
     It is used to retrieve the referral count for that particular user
     :return: the referral count of a user with the given user_id from the referral_data table in the
-    mushee_bot database.
+    crypto_bot database.
     """
     select_query = "SELECT referral_count FROM referral_data WHERE user_id = %s"
     count = execute_query(select_query, (user_id,))
@@ -410,9 +410,9 @@ def insert_wallet_data(user_id, address):
     connection.commit()
 def select_wallet():
     """
-    The function selects the user IDs from the "wallet" table in the "mushee_bot" database and returns
+    The function selects the user IDs from the "wallet" table in the "crypto_bot" database and returns
     them as a list.
-    :return: a list of user IDs from the "wallet" table in the "mushee_bot" database.
+    :return: a list of user IDs from the "wallet" table in the "crypto_bot" database.
     """
     connection = mysql.connector.connect(
         host=RAILWAY_HOST,
@@ -432,10 +432,10 @@ def select_wallet_by_user_id(user_id):
     This function selects the wallet address associated with a given user ID from a MySQL database.
     
     :param user_id: The user ID is a unique identifier for a user in the database. This function selects
-    the wallet address associated with the given user ID from the "wallet" table in the "mushee_bot"
+    the wallet address associated with the given user ID from the "wallet" table in the "crypto_bot"
     database
     :return: the wallet address of the user with the given user_id from the "wallet" table in the
-    "mushee_bot" database.
+    "crypto_bot" database.
     """
     select_query = "SELECT address FROM wallet WHERE user_id = %s LIMIT 1"
     wallet_address = execute_query(select_query, (user_id,))
@@ -552,7 +552,7 @@ def handle_referrals(message):
                 response = user_referral_link(user_id)
                 bot.send_message(message.chat.id, response, reply_markup=set_wallet_keyboard)
             elif referral_link_exists(user_id) is False:                   
-                @bot.message_handler(func=lambda message: message.chat.id == user_id and 'https://t.me/MusheeBot?start=' in message.text)
+                @bot.message_handler(func=lambda message: message.chat.id == user_id and 'https://t.me/cryptoBot?start=' in message.text)
                 def handle_referrals(message):
                     # Extract the referrer's ID from the message
                     if referral_link_exists(user_id) is False:      
@@ -735,7 +735,7 @@ def check_airdrop_balance(message):
     total_balance = select_balance_by_user_id(user_id) + referral_user_balance(user_id)
     
     response = f"""
-    😲 You've earned {select_balance_by_user_id(user_id)} MSH from our airdrop\n\n🔄️ Your referral count is {referral_user_count(user_id)} and your referral balance is {referral_user_balance(user_id)} MSH.\n\n🗿 Total balance is {total_balance} MSH
+    😲 You've earned {select_balance_by_user_id(user_id)} tPNA from our airdrop\n\n🔄️ Your referral count is {referral_user_count(user_id)} and your referral balance is {referral_user_balance(user_id)} tPNA.\n\n🗿 Total balance is {total_balance} tPNA
     """
     bot.send_message(message.chat.id, response)
 # The above code is defining a message handler for a Telegram bot using the Python programming
@@ -754,7 +754,7 @@ def show_referral_info(message):
     # Get the user's unique ID
     user_id = message.chat.id
         
-    bot.reply_to(message, f"You were referred by user ID {referrer_data(user_id)}.\n\n Your referral count is {referral_user_count(user_id)} and your referral balance is {int(referral_user_balance(user_id))} MSH.\n\n🔗 Your referral link is https://t.me/{bot.get_me().username}?start={user_id}") 
+    bot.reply_to(message, f"You were referred by user ID {referrer_data(user_id)}.\n\n Your referral count is {referral_user_count(user_id)} and your referral balance is {int(referral_user_balance(user_id))} tPNA.\n\n🔗 Your referral link is https://t.me/{bot.get_me().username}?start={user_id}") 
 # The above code is using the Python library `python-telegram-bot` to create a bot that can receive
 # and respond to messages on the Telegram messaging platform. The `bot.infinity_polling()` method is
 # used to continuously poll for new messages and handle them appropriately. The `try-except` block is
