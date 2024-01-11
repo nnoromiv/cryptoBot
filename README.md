@@ -36,7 +36,7 @@ Follow these steps to set up and run the Crypto Telegram Bot:
 
     ```env
         BOTTOKEN =Telegram Token from `BotFather`
-        SUCCESS_MESSAGE = '👍 Welcome To crypto World'
+        SUCCESS_MESSAGE = '👍 Welcome To the Crypto World
         RAILWAY_HOST = localhost
         RAILWAY_DB = railway
         RAILWAY_USER = root
