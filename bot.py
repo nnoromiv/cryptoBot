@@ -122,11 +122,11 @@ except Error as e:
 user_airdrop = 50
 SUCCESS_MESSAGE = os.environ['SUCCESS_MESSAGE']
 ERROR_MESSAGE = f"""
-👏 Follow <b><a href="https://twitter.com/cryptohub">Crypto Twitter</a></b>
+👏 Follow <b><a href="https://twitter.com/nnoromiv">Crypto Twitter</a></b>
 
-👏 Join <b><a href="https://t.me/cryptohub">Crypto Telegram Channel</a></b>
+👏 Join <b><a href="https://t.me/nnoromiv">Crypto Telegram Channel</a></b>
 
-👏 Join <b><a href="https://t.me/cryptohub">Crypto Telegram Group</a></b>
+👏 Join <b><a href="https://t.me/nnoromiv">Crypto Telegram Group</a></b>
 
 😒 Connect with us to continue
 """
@@ -148,11 +148,11 @@ WELCOME_MESSAGE = f"""
 
 🗒️ <b>TASK:</b>
 
-👏 Follow <b><a href="https://twitter.com/cryptohub">Crypto Twitter</a></b>
+👏 Follow <b><a href="https://twitter.com/nnoromiv">Crypto Twitter</a></b>
 
-👏 Join <b><a href="https://t.me/cryptohub">Crypto Telegram Channel</a></b>
+👏 Join <b><a href="https://t.me/nnoromiv">Crypto Telegram Channel</a></b>
 
-👏 Join <b><a href="https://t.me/cryptohub">Crypto Telegram Group</a></b>
+👏 Join <b><a href="https://t.me/nnoromiv">Crypto Telegram Group</a></b>
 
 🧏 Use only positive words to chat in the group otherwise you will miss the big opportunity
 
